@@ -1,8 +1,3 @@
-¡Vamos a darle **ESTILO PRO** al `README.md`! 😎  
-Te armo un documento con **emojis**, **secciones elegantes**, **tipografías claras** (dentro del estilo Markdown), **tablas organizadas** y un **tono profesional pero atractivo**.
-
----
-
 ```markdown
 <h1 align="center">🚀 BTC Predictive Trading System</h1>
 <p align="center">
