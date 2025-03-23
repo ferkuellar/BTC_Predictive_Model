@@ -1,131 +1,110 @@
 import pandas as pd
 import numpy as np
+from imblearn.over_sampling import SMOTE
+from ta.volatility import BollingerBands, AverageTrueRange
+from ta.trend import EMAIndicator, MACD, ADXIndicator
+from ta.momentum import RSIIndicator
+import warnings
+warnings.filterwarnings('ignore')
 
+# Cargar el dataset preprocesado
+print("🔧 Iniciando Feature Engineering...")
 
-# Cargar el archivo preprocesado
 df = pd.read_csv('data/BTC_5m_preprocessed.csv')
+print(f"📌 Antes de limpieza - Registros: {len(df)}")
 
-# Verificar las primeras filas
-df.head()
+# ========== INDICADORES TÉCNICOS ==========
 
-
-# Crea la columna target: 1 si sube el precio en la siguiente vela, 0 si baja o se mantiene igual
-df['target'] = (df['close'].shift(-1) > df['close']).astype(int)
-
-# Mostrar algunas filas para verificar
-df[['close', 'target']].head(10)
-
-
-# Indicadores básicos
-df['log_return'] = np.log(df['close'] / df['close'].shift(1))
-df['pct_change'] = df['close'].pct_change()
-
-# Exponential Moving Averages (EMA)
-df['ema_12'] = df['close'].ewm(span=12, adjust=False).mean()
-df['ema_26'] = df['close'].ewm(span=26, adjust=False).mean()
+# EMA
+df['ema_12'] = EMAIndicator(df['close'], window=12).ema_indicator()
+df['ema_26'] = EMAIndicator(df['close'], window=26).ema_indicator()
 
 # MACD
-df['macd'] = df['ema_12'] - df['ema_26']
-df['macd_signal'] = df['macd'].ewm(span=9, adjust=False).mean()
-df['macd_histogram'] = df['macd'] - df['macd_signal']
+macd = MACD(df['close'])
+df['macd'] = macd.macd()
+df['macd_signal'] = macd.macd_signal()
+df['macd_histogram'] = macd.macd_diff()
 
+# RSI
+df['rsi'] = RSIIndicator(df['close'], window=14).rsi()
 
-bb_window = 20
-bb_std = 2
-df['bb_middle'] = df['close'].rolling(window=bb_window).mean()
-df['bb_std'] = df['close'].rolling(window=bb_window).std()
-df['bb_upper'] = df['bb_middle'] + bb_std * df['bb_std']
-df['bb_lower'] = df['bb_middle'] - bb_std * df['bb_std']
-df['bb_width'] = df['bb_upper'] - df['bb_lower']
+# ADX
+adx = ADXIndicator(df['high'], df['low'], df['close'], window=14)
+df['adx'] = adx.adx()
 
+# ATR
+atr = AverageTrueRange(df['high'], df['low'], df['close'], window=14)
+df['atr'] = atr.average_true_range()
 
-window_length = 14
-delta = df['close'].diff()
-gain = delta.clip(lower=0)
-loss = -1 * delta.clip(upper=0)
-
-avg_gain = gain.ewm(alpha=1/window_length, min_periods=window_length).mean()
-avg_loss = loss.ewm(alpha=1/window_length, min_periods=window_length).mean()
-
-rs = avg_gain / avg_loss
-df['rsi'] = 100 - (100 / (1 + rs))
-
-
-def calculate_adx(df, n=14):
-    high = df['high']
-    low = df['low']
-    close = df['close']
-
-    df['tr1'] = high - low
-    df['tr2'] = (high - close.shift(1)).abs()
-    df['tr3'] = (low - close.shift(1)).abs()
-    df['TR'] = df[['tr1', 'tr2', 'tr3']].max(axis=1)
-
-    df['+DM'] = np.where((high - high.shift(1)) > (low.shift(1) - low),
-                         np.maximum(high - high.shift(1), 0), 0)
-    df['-DM'] = np.where((low.shift(1) - low) > (high - high.shift(1)),
-                         np.maximum(low.shift(1) - low, 0), 0)
-
-    tr14 = df['TR'].rolling(window=n).sum()
-    plus_dm14 = df['+DM'].rolling(window=n).sum()
-    minus_dm14 = df['-DM'].rolling(window=n).sum()
-
-    plus_di14 = 100 * (plus_dm14 / tr14)
-    minus_di14 = 100 * (minus_dm14 / tr14)
-
-    dx = (abs(plus_di14 - minus_di14) / (plus_di14 + minus_di14)) * 100
-    adx = dx.rolling(window=n).mean()
-
-    df.drop(columns=['tr1', 'tr2', 'tr3', 'TR', '+DM', '-DM'], inplace=True)
-
-    return adx
-
-# Aplicar el cálculo
-df['adx'] = calculate_adx(df)
-
-
-high = df['high']
-low = df['low']
-close = df['close']
-
-tr1 = high - low
-tr2 = (high - close.shift(1)).abs()
-tr3 = (low - close.shift(1)).abs()
-
-df['TR'] = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
-df['atr'] = df['TR'].rolling(window=14).mean()
-
-# Elimina la columna TR temporal si no la necesitas
-df.drop(columns=['TR'], inplace=True)
-
+# ========== CARACTERÍSTICAS ESTADÍSTICAS ==========
 
 df['returns_mean_5'] = df['log_return'].rolling(window=5).mean()
 df['returns_std_5'] = df['log_return'].rolling(window=5).std()
-
 df['returns_mean_20'] = df['log_return'].rolling(window=20).mean()
 df['returns_std_20'] = df['log_return'].rolling(window=20).std()
 
+# Diferencias y relaciones
 df['ema_diff'] = df['ema_12'] - df['ema_26']
 df['rsi_macd_ratio'] = df['rsi'] / (df['macd'] + 1e-6)
+
+# Posición en las bandas de Bollinger
 df['bb_position'] = (df['close'] - df['bb_lower']) / (df['bb_upper'] - df['bb_lower'])
 
-df['rsi_overbought'] = np.where(df['rsi'] > 70, 1, 0)
-df['rsi_oversold'] = np.where(df['rsi'] < 30, 1, 0)
-df['macd_cross'] = np.where(df['macd'] > df['macd_signal'], 1, 0)
+# Flags de señales
+df['rsi_overbought'] = (df['rsi'] > 70).astype(int)
+df['rsi_oversold'] = (df['rsi'] < 30).astype(int)
+df['macd_cross'] = (df['macd'] > df['macd_signal']).astype(int)
 
+# Volatilidad
 df['volatility'] = df['returns_std_20']
 df['vol_ratio'] = df['volume'] / df['volume'].rolling(window=20).mean()
 
+# Target (clasificación binaria: si el precio sube en la siguiente vela)
+df['target'] = (df['close'].shift(-1) > df['close']).astype(int)
 
+# ========== LIMPIEZA POST CÁLCULOS ==========
 df.dropna(inplace=True)
+df.reset_index(drop=True, inplace=True)
 
-# Revisar estructura final
-df.info()
+print(f"✅ Después de limpieza - Registros: {len(df)}")
 
+# ========== DEFINICIÓN DE FEATURES ==========
+features = [
+    'log_return', 'pct_change',
+    'sma_20', 'stddev_20',
+    'bb_upper', 'bb_lower', 'bb_width',
+    'ema_12', 'ema_26',
+    'macd', 'macd_signal', 'macd_histogram',
+    'rsi', 'adx', 'atr',
+    'returns_mean_5', 'returns_std_5',
+    'returns_mean_20', 'returns_std_20',
+    'ema_diff', 'rsi_macd_ratio',
+    'bb_position',
+    'rsi_overbought', 'rsi_oversold',
+    'macd_cross', 'volatility', 'vol_ratio'
+]
 
-df.to_csv('data/BTC_5m_features.csv', index=False)
-print("✅ Dataset guardado en 'data/BTC_5m_features.csv'")
+# ========= DATASETS SIN SMOTE ==========
+X_no_smote = df[features]
+y_no_smote = df['target']
 
+# Guardar dataset sin SMOTE (para backtesting)
+df_no_smote = X_no_smote.copy()
+df_no_smote['target'] = y_no_smote
+df_no_smote.to_csv('data/BTC_5m_features_nosmote.csv', index=False)
+print("✅ Dataset sin SMOTE guardado en 'data/BTC_5m_features_nosmote.csv'")
 
+# ========== SMOTE BALANCEO ==========
+smote = SMOTE(random_state=42)
+X_res, y_res = smote.fit_resample(X_no_smote, y_no_smote)
 
+# Dataset balanceado
+df_features = pd.DataFrame(X_res, columns=features)
+df_features['target'] = y_res
 
+# Guardar dataset balanceado
+df_features.to_csv('data/BTC_5m_features.csv', index=False)
+print("✅ Dataset balanceado guardado en 'data/BTC_5m_features.csv'")
+
+# Información del dataframe
+print(df_features.info())

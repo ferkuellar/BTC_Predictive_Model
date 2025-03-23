@@ -2,6 +2,11 @@ import pandas as pd
 import time
 import ccxt
 from datetime import datetime
+import os
+
+# Asegurar que exista la carpeta 'data'
+os.makedirs('data', exist_ok=True)
+
 
 # ==============================
 # CONFIGURACIÓN
