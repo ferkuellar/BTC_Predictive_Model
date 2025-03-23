@@ -112,15 +112,14 @@ Take Profit: $41,200
 
 ---
 ## 📓 Google Colab Notebooks  
-¿Prefieres trabajar en la nube? Abre cualquiera de nuestros notebooks directamente en Google Colab:
 
 | Notebook                                   | Descripción                                          | Google Colab |
 |--------------------------------------------|------------------------------------------------------|--------------|
-| `01_data_collection.ipynb`                 | Recolección de datos históricos de Binance           | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/fernandokuellar/BTC_Predictive_Model/blob/main/01_data_collection.ipynb) |
-| `02_data_preprocessing.ipynb`              | Limpieza, normalización y preparación de datos       | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/fernandokuellar/BTC_Predictive_Model/blob/main/02_data_preprocessing.ipynb) |
-| `03_feature_engineering.ipynb`             | Generación de características e indicadores técnicos | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/fernandokuellar/BTC_Predictive_Model/blob/main/03_feature_engineering.ipynb) |
-| `04_model_training.ipynb`                  | Entrenamiento de modelos XGBoost y LSTM              | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/fernandokuellar/BTC_Predictive_Model/blob/main/04_model_training.ipynb) |
-| `05_backtesting.ipynb`                     | Evaluación y backtesting de la estrategia            | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/fernandokuellar/BTC_Predictive_Model/blob/main/05_backtesting.ipynb) |
+| `01_data_collection.ipynb`                 | Recolección de datos históricos de Binance           | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ferkuellar/BTC_Predictive_Model/blob/main/01_data_collection.ipynb) |
+| `02_data_preprocessing.ipynb`              | Limpieza y normalización de datos                    | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ferkuellar/BTC_Predictive_Model/blob/main/02_data_preprocessing.ipynb) |
+| `03_feature_engineering.ipynb`             | Creación de indicadores técnicos (RSI, ATR, etc.)    | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ferkuellar/BTC_Predictive_Model/blob/main/03_feature_engineering.ipynb) |
+| `04_model_training.ipynb`                  | Entrenamiento de modelos XGBoost y LSTM              | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ferkuellar/BTC_Predictive_Model/blob/main/04_model_training.ipynb) |
+| `05_backtesting.ipynb`                     | Evaluación y backtesting de la estrategia            | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ferkuellar/BTC_Predictive_Model/blob/main/05_backtesting.ipynb) |
 
 ## ⚠️ Disclaimer  
 > Este proyecto es **experimental** y de uso **educativo**. El trading de criptomonedas implica **alto riesgo**. El autor no asume responsabilidad alguna por pérdidas financieras derivadas del uso de este software.
